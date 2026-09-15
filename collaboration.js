@@ -21,6 +21,16 @@
   },{passive:true});
   dots.forEach((d,i)=>d.addEventListener('click',()=>goAct(i)));
   const pieces=[...document.querySelectorAll('.exhibit-piece')];
+  const districtCard=cards.pop();
+  const districtPiece=pieces.pop();
+  cards.unshift(districtCard);
+  pieces.unshift(districtPiece);
+  rail.prepend(districtCard);
+  document.querySelector('.exhibit-stage').prepend(districtPiece);
+  cards.forEach((card,index)=>{
+    const number=card.querySelector('span');
+    if(number)number.textContent=String(index+1).padStart(2,'0');
+  });
   function selectExhibit(i){source=i;cards.forEach((c,j)=>c.setAttribute('aria-current',String(i===j)));pieces.forEach((p,j)=>{p.hidden=i!==j;});}
   cards.forEach((c,i)=>{c.addEventListener('click',()=>selectExhibit(i));c.addEventListener('focus',()=>selectExhibit(i));});
   selectExhibit(0);
