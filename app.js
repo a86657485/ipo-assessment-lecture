@@ -34,6 +34,7 @@ function setPage(next) {
   if (pageIndex === 2) setBlankStep(0, true);
   if (pageIndex === 4) window.startIPO?.();
   else window.stopIPO?.();
+  if (pageIndex === 6) window.startReviewFlow?.();
 }
 
 function setBlankStep(next, reset = false) {
@@ -132,7 +133,7 @@ document.querySelector('#page-up').addEventListener('click', () => setPage(pageI
 document.querySelector('#page-down').addEventListener('click', () => setPage(pageIndex + 1));
 document.querySelector('#scene-back').addEventListener('click', () => setBlankStep(blankStep - 1));
 document.querySelector('#scene-next').addEventListener('click', () => setBlankStep(blankStep + 1));
-document.querySelector('#replay').addEventListener('click', () => pageIndex === 0 ? replayCover() : pageIndex === 2 ? setBlankStep(0, true) : pageIndex === 3 ? window.resetCollaboration() : pageIndex === 4 ? window.replayIPO() : analysisScroll.scrollTo({top:0,behavior:'smooth'}));
+document.querySelector('#replay').addEventListener('click', () => pageIndex === 0 ? replayCover() : pageIndex === 2 ? setBlankStep(0, true) : pageIndex === 3 ? window.resetCollaboration() : pageIndex === 4 ? window.replayIPO() : pageIndex === 6 ? window.resetReviewFlow() : analysisScroll.scrollTo({top:0,behavior:'smooth'}));
 document.querySelector('#fullscreen').addEventListener('click', fullscreen);
 window.addEventListener('message', event => {
   if (event.source === questionShowcaseFrame?.contentWindow && event.data?.type === 'question-showcase-page') {

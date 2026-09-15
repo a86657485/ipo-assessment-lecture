@@ -1,0 +1,3 @@
+dialog#reader .reader-body { min-height: 0; padding: 10px; overflow: hidden; }
+dialog#reader .reader-body button { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; }
+dialog#reader #reader-image { width: auto !important; height: calc(90vh - 186px) !important; max-width: 100% !important; max-height: calc(90vh - 186px) !important; object-fit: contain; }

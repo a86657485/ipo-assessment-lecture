@@ -27,6 +27,12 @@
   pieces.unshift(districtPiece);
   rail.prepend(districtCard);
   document.querySelector('.exhibit-stage').prepend(districtPiece);
+  districtPiece.innerHTML='<a href="resources/pdf/07-市赛具体要求.pdf" data-document="区赛命题要求" class="district-requirement-preview"><img src="assets/collaboration/district-requirements.png" alt="龙岗区2026年初中信息科技学科命题比赛具体要求"></a>';
+  const districtLink=districtPiece.querySelector('.district-requirement-preview');
+  districtLink.addEventListener('click',event=>{
+    event.preventDefault();
+    openPdf(districtLink.getAttribute('href'),districtLink.dataset.document);
+  });
   cards.forEach((card,index)=>{
     const number=card.querySelector('span');
     if(number)number.textContent=String(index+1).padStart(2,'0');
