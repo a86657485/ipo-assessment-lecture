@@ -1135,6 +1135,19 @@
     #slide3 .ipo-visual-card { background: #fff; box-shadow: 0 12px 28px rgba(25, 45, 70, .08); }
     #slide3 .ipo-visual-card::after { background: rgba(24, 42, 62, .72); }
     #slide3 .source-frame { border-color: #dfe6ed; box-shadow: 0 12px 28px rgba(25, 45, 70, .08); }
+    /* Keep the original flow layout, but remove the decorative I/P/O circles
+       from the three overview cards and make the selected card unmistakable. */
+    #slide3 .ipo-node-mark { display: none !important; }
+    #slide3 .ipo-flow-chip { border-width: 1px; opacity: .68; }
+    #slide3 .ipo-flow-chip.active {
+      opacity: 1;
+      border: 2px solid var(--accent);
+      background: color-mix(in srgb, var(--accent) 18%, #fff);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 17%, transparent), 0 10px 24px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    #slide3 .ipo-flow-chip.active strong,
+    #slide3 .ipo-flow-chip.active span { color: #18344f; }
+    #slide3 .ipo-flow-chip.active small { color: #4e6981; }
   </style>
 </head>
 <body>
