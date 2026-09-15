@@ -56,8 +56,7 @@
   document.querySelector('#show-ipo').addEventListener('click',()=>document.querySelector('#ipo-dialog').showModal());
   document.addEventListener('keydown',e=>{
     if(document.body.dataset.page!=='3'||document.querySelector('dialog[open]')||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
-    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const direction=e.key==='ArrowRight'?1:-1;if(act===0)goSource(source+direction);else goAct(act+direction);}
-    if(e.code==='Space' && !e.target.closest('button,a,input')){e.preventDefault();goAct(act+1);}
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();goAct(act+(e.key==='ArrowDown'?1:-1));}
   });
   const recall=document.querySelector('.recall-act');
   const reflection=document.querySelector('.memory-reflection');

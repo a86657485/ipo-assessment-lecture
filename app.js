@@ -40,7 +40,7 @@ function setBlankStep(next, reset = false) {
   const target = Math.max(0, Math.min(5, next));
   if (!reset && target === blankStep) return;
   blankStep = target;
-  blankLock = performance.now() + (reduced.matches ? 80 : 1750);
+  blankLock = performance.now() + (reduced.matches ? 80 : 500);
   blankScene.dataset.step = blankStep;
   document.querySelector('#scene-back').disabled = blankStep === 0;
   document.querySelector('#scene-next').disabled = blankStep === 5;
@@ -137,15 +137,16 @@ document.addEventListener('pointermove', showControls);
 window.addEventListener('resize', () => { if (pageIndex === 1) goGallery(galleryIndex); });
 document.addEventListener('keydown', event => {
   if (document.querySelector('dialog[open]') || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
-  if (event.key === 'ArrowDown' || event.key === 'PageDown') { event.preventDefault(); setPage(pageIndex + 1); return; }
-  if (event.key === 'ArrowUp' || event.key === 'PageUp') { event.preventDefault(); setPage(pageIndex - 1); return; }
+  if (event.key === 'ArrowRight' || event.key === 'PageDown') { event.preventDefault(); setPage(pageIndex + 1); return; }
+  if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); setPage(pageIndex - 1); return; }
   if (event.key.toLowerCase() === 'f') fullscreen();
   if (event.key.toLowerCase() === 'r') document.querySelector('#replay').click();
-  if (pageIndex === 0 && event.code === 'Space') { event.preventDefault(); setPage(1); return; }
-  if (pageIndex === 1 && event.key === 'ArrowRight') { event.preventDefault(); goGallery(galleryIndex + 1); }
-  if (pageIndex === 1 && event.key === 'ArrowLeft') { event.preventDefault(); goGallery(galleryIndex - 1); }
-  if (pageIndex === 2 && (event.key === 'ArrowRight' || event.code === 'Space')) { event.preventDefault(); setBlankStep(blankStep + 1); }
-  if (pageIndex === 2 && event.key === 'ArrowLeft') { event.preventDefault(); setBlankStep(blankStep - 1); }
+  if (pageIndex === 1 && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+    event.preventDefault();
+    analysisScroll.scrollBy({top: (event.key === 'ArrowDown' ? 1 : -1) * analysisScroll.clientHeight * .72, behavior: reduced.matches ? 'instant' : 'smooth'});
+  }
+  if (pageIndex === 2 && event.key === 'ArrowDown') { event.preventDefault(); setBlankStep(blankStep + 1); }
+  if (pageIndex === 2 && event.key === 'ArrowUp') { event.preventDefault(); setBlankStep(blankStep - 1); }
 });
 document.addEventListener('wheel', event => {
   if (document.querySelector('dialog[open]') || event.ctrlKey || pageIndex === 1 || pageIndex === 3 || pageIndex === 4 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;

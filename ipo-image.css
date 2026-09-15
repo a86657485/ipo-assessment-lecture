@@ -5,7 +5,7 @@
 
 /* Static fifth-page presentation: the cutout sits on the same white stage as
    the first four pages. Only the O region remains interactive. */
-.ipo-page{background:#fff url('assets/ipo-cutout-v2.png') center/100% 100% no-repeat}
+.ipo-page{background:#fff url('assets/ipo-user-final.png') center/100% 100% no-repeat}
 .ipo-heading button,.ipo-return button{display:none!important}
 .ipo-gate{pointer-events:none!important;background:transparent!important;box-shadow:none!important}
 .ipo-gate.flowing:after,.ipo-return.looping svg{display:none!important}

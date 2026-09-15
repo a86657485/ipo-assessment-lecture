@@ -22,7 +22,7 @@
   window.replayIPO = showStaticIPO;
 
   output.addEventListener('click', () => {
-    frame.src = 'resources/ipo-dashboard/index.html';
+    frame.src = 'resources/全卷数据分析_双模块融合版.html';
     modal.showModal();
   });
   window.addEventListener('message', event => {

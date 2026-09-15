@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>全卷数据分析｜多维细目表</title>
+<style>
+:root{
+  --bg0:#07142a; --bg1:#0b1c39; --panel:#14294b; --panel2:#1a3157; --line:#385170;
+  --text:#f7fbff; --muted:#9aacc6; --muted2:#7287a5; --cyan:#58d1cb; --blue:#5b98e8;
+  --gold:#f5c75b; --red:#ef7482; --shadow:0 18px 55px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;background:
+  radial-gradient(1200px 700px at -10% -10%,rgba(70,171,198,.20),transparent 45%),
+  radial-gradient(900px 560px at 110% 10%,rgba(103,118,170,.16),transparent 45%),
+  linear-gradient(135deg,var(--bg0),var(--bg1));color:var(--text)}
+button{font:inherit}
+.app{min-height:100vh;padding:0 0 22px}
+.topbar{height:108px;display:flex;align-items:center;justify-content:space-between;padding:0 32px 0 34px;border-bottom:1px solid #29425e;background:linear-gradient(90deg,rgba(31,75,96,.38),rgba(15,24,43,.5));}
+.brand{display:flex;align-items:center;gap:18px;font-weight:800;font-size:30px;letter-spacing:1px}
+.brand-icon{width:36px;height:36px;border:4px solid var(--gold);border-radius:50%;position:relative;border-right-color:transparent;transform:rotate(-12deg)}
+.brand-icon:after{content:"";position:absolute;width:17px;height:9px;border-left:4px solid var(--gold);border-bottom:4px solid var(--gold);left:9px;top:7px;transform:rotate(-35deg)}
+.icon-btn{width:62px;height:62px;border-radius:50%;background:#0b1220;border:1px solid #3f4b5b;color:#fff;font-size:38px;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow);transition:.18s}
+.icon-btn:hover{transform:translateY(-2px);border-color:#7285a2;background:#111b2f}
+.main{padding:16px 24px 0;max-width:1580px;margin:auto}
+.panel{background:linear-gradient(180deg,rgba(47,69,102,.78),rgba(21,42,77,.82));border:1px solid var(--line);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.panel.clickable{cursor:pointer;transition:.18s}
+.panel.clickable:hover{transform:translateY(-2px);border-color:#577699;box-shadow:0 14px 35px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.05)}
+.summary{padding:18px 22px 12px;margin-bottom:12px}
+.section-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px}
+.section-title{font-size:24px;font-weight:800;letter-spacing:.5px}
+.section-sub{font-size:15px;color:var(--muted)}
+.grid-fields{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
+.field{min-height:48px;border:1px solid rgba(112,137,172,.35);border-radius:12px;padding:6px 10px;background:rgba(255,255,255,.018);overflow:hidden}
+.field .label{font-size:11px;font-weight:700;color:#8899b1;letter-spacing:.5px;display:block;margin-bottom:2px;white-space:nowrap}
+.field .value{font-size:14px;font-weight:800;color:#f1f7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field .accent{color:var(--gold)}
+.span2{grid-column:span 2}.span4{grid-column:span 4}.span6{grid-column:span 6}
+.dashboard{display:grid;grid-template-columns:1.18fr 1fr;gap:14px}
+.left{min-height:642px;padding:24px}
+.right{display:grid;grid-template-rows:240px 180px 204px;gap:14px}
+.right .panel{padding:20px}
+.headline{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.headline h2{font-size:24px;margin:0;font-weight:800}.hint{color:var(--muted);font-size:14px}
+.radar-wrap{height:440px;position:relative;display:grid;place-items:center}
+.radar{width:520px;max-width:90%;height:400px;overflow:visible}
+.axis-label{position:absolute;font-weight:800;font-size:29px;line-height:1.2;text-shadow:0 2px 10px rgba(0,0,0,.2)}
+.axis-label small{display:block;color:var(--gold);font-size:22px;text-align:center;margin-top:4px}.axis-top{top:22px;left:50%;transform:translateX(-50%);text-align:center}.axis-right{right:4%;top:46%;transform:translateY(-50%)}.axis-bottom{bottom:1px;left:50%;transform:translateX(-50%);text-align:center}.axis-left{left:2%;top:46%;transform:translateY(-50%);text-align:right}
+.core-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.legend-btn{border:1px solid rgba(112,137,172,.4);background:rgba(255,255,255,.018);border-radius:12px;padding:14px 16px;color:#dfe9f5;display:flex;justify-content:space-between;font-weight:800;cursor:pointer;transition:.15s}
+.legend-btn:hover{background:rgba(255,255,255,.04);border-color:#6480a2}.legend-btn b{color:var(--gold);font-size:19px}
+.module-body{display:grid;grid-template-columns:160px 1fr;align-items:center;gap:18px;height:166px}
+.donut{width:118px;height:118px;border-radius:50%;margin:auto;background:conic-gradient(var(--cyan) 0 50%,var(--blue) 50% 100%);display:grid;place-items:center;box-shadow:0 0 0 1px rgba(255,255,255,.03)}
+.donut:after{content:"";width:62px;height:62px;border-radius:50%;background:#0c1930;border:1px solid #2e4a6c}
+.donut-center{position:absolute;text-align:center;font-size:13px;font-weight:900;line-height:1.05}.donut-center small{display:block;font-size:7px;color:var(--muted);letter-spacing:.5px;margin-top:4px}
+.donut-wrap{position:relative;display:grid;place-items:center}
+.module-list{display:grid;gap:9px}
+.module-btn{height:46px;border:1px solid rgba(112,137,172,.36);border-radius:12px;background:rgba(255,255,255,.018);color:#e9f0fa;display:flex;align-items:center;justify-content:space-between;padding:0 16px;cursor:pointer;font-weight:800}
+.module-btn:hover{background:rgba(255,255,255,.045)}
+.module-name{display:flex;align-items:center;gap:12px}.doticon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:16px;border:1px solid currentColor}.cyan{color:var(--cyan)}.blue{color:var(--blue)}.gold{color:var(--gold)}.red{color:var(--red)}
+.portrait-card{height:78px;border:1px solid rgba(112,137,172,.38);border-radius:15px;margin-top:26px;padding:14px 18px;cursor:pointer;background:linear-gradient(90deg,rgba(79,106,137,.25),rgba(255,255,255,.02))}
+.portrait-card:hover{border-color:#6480a2}.eyebrow{font-size:12px;letter-spacing:2px;color:var(--gold);font-weight:900}.portrait-value{font-size:30px;font-weight:900;letter-spacing:1px;margin-top:3px}
+.diff-list{display:grid;gap:12px;margin-top:18px}.diff-row{display:grid;grid-template-columns:72px 1fr 68px;gap:14px;align-items:center}.stars{font-weight:900;font-size:20px}.track{height:15px;background:rgba(0,0,0,.15);border-radius:99px;overflow:hidden}.bar{height:100%;border-radius:99px;box-shadow:inset 0 0 10px rgba(255,255,255,.18)}.bar.cyanbg{background:linear-gradient(90deg,#61cbc5,#9de1dc)}.bar.goldbg{background:linear-gradient(90deg,#f0c255,#ffe09a)}.bar.redbg{background:linear-gradient(90deg,#e86d7a,#f1a3ae)}.score{font-weight:900;font-size:16px}
+.footer-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:12px}.action{border:1px solid #49698d;background:#122746;color:#eaf4ff;border-radius:11px;padding:10px 15px;cursor:pointer;font-weight:700}.action:hover{background:#19355c}
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,8,18,.72);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px;z-index:50}.modal-backdrop.show{display:flex}.modal{width:min(980px,96vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,#162b4d,#0f2140);border:1px solid #4c6689;border-radius:20px;box-shadow:0 35px 90px rgba(0,0,0,.48)}
+.modal-header{position:sticky;top:0;z-index:3;background:linear-gradient(180deg,#1a3157,#162b4d);display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #3c5678}.modal-title{font-size:22px;font-weight:900}.modal-close{width:38px;height:38px;border-radius:50%;border:1px solid #58708e;background:#0b182d;color:white;font-size:25px;cursor:pointer}.modal-body{padding:20px 22px 24px}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.detail{border:1px solid rgba(112,137,172,.36);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.02)}.detail.wide{grid-column:1/-1}.detail-label{font-size:12px;color:#90a4bf;margin-bottom:6px}.detail-value{font-size:15px;font-weight:700;line-height:1.55}.table-wrap{overflow:auto;border:1px solid #334d6e;border-radius:14px}.data-table{width:100%;border-collapse:collapse;min-width:1250px}.data-table th,.data-table td{padding:10px 11px;border-bottom:1px solid #2d4666;border-right:1px solid #2b4260;text-align:left;vertical-align:top;font-size:13px}.data-table th{position:sticky;top:0;background:#1c3b67;color:#fff;z-index:1}.data-table tr:hover td{background:rgba(255,255,255,.035)}
+.toast{position:fixed;right:24px;bottom:24px;background:#0c1e37;border:1px solid #466584;color:#eaf3ff;padding:12px 16px;border-radius:12px;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s;z-index:80}.toast.show{opacity:1;transform:none}
+@media (max-width:1050px){.dashboard{grid-template-columns:1fr}.right{grid-template-rows:auto}.topbar{height:88px}.brand{font-size:24px}.axis-label{font-size:23px}.right .panel{min-height:190px}.grid-fields{grid-template-columns:repeat(6,1fr)}.span6{grid-column:span 6}.span4{grid-column:span 3}.span2{grid-column:span 2}}
+@media (max-width:680px){.main{padding:12px}.topbar{padding:0 16px}.brand{font-size:19px;gap:10px}.brand-icon{width:30px;height:30px}.icon-btn{width:48px;height:48px;font-size:28px}.summary{padding:14px}.grid-fields{grid-template-columns:1fr 1fr}.field,.span2,.span4,.span6{grid-column:span 1}.field:nth-child(5),.field:nth-child(6){grid-column:1/-1}.left{padding:16px;min-height:auto}.radar-wrap{height:380px}.axis-label{font-size:18px}.axis-label small{font-size:16px}.core-legend{grid-template-columns:1fr}.module-body{grid-template-columns:120px 1fr}.right{display:block}.right .panel{margin-bottom:12px}.detail-grid{grid-template-columns:1fr}.detail.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon"></span><span>全卷数据分析</span></div>
+    <button class="icon-btn" id="closePage" title="关闭/返回">×</button>
+  </header>
+
+  <main class="main">
+    <section class="panel summary clickable" id="questionSummary" title="点击查看第1题完整数据">
+      <div class="section-title-row"><div class="section-title">多维细目表</div><div class="section-sub">第1题样例 · 点击查看详情</div></div>
+      <div class="grid-fields">
+        <div class="field span2"><span class="label">题号</span><div class="value accent">1</div></div>
+        <div class="field span2"><span class="label">题型</span><div class="value">单选题</div></div>
+        <div class="field span2"><span class="label">分值</span><div class="value accent">3</div></div>
+        <div class="field span2"><span class="label">难度</span><div class="value">★★★</div></div>
+        <div class="field span4"><span class="label">情境载体</span><div class="value">智慧温室排风扇控制</div></div>
+        <div class="field span6"><span class="label">考查知识点</span><div class="value">基于数据分析设计算法的方法；and/or 复合逻辑推演</div></div>
+        <div class="field span6"><span class="label">课标内容模块</span><div class="value">物联网实践与探索（反馈控制有算法）</div></div>
+        <div class="field span2"><span class="label">核心素养</span><div class="value">■▲</div></div>
+        <div class="field span2"><span class="label">认知层次</span><div class="value">应用</div></div>
+        <div class="field span2"><span class="label">能力要求</span><div class="value">推演</div></div>
+        <div class="field span2"><span class="label">预估得分率</span><div class="value accent">0.70</div></div>
+        <div class="field span4"><span class="label">教材出处</span><div class="value">八年级第20课</div></div>
+      </div>
+    </section>
+
+    <section class="dashboard">
+      <div class="panel left clickable" id="corePanel">
+        <div class="headline"><h2>核心素养</h2><span class="hint">按27条明细出现次数统计 · 点击查看</span></div>
+        <div class="radar-wrap">
+          <div class="axis-label axis-top">信息意识<small>7条</small></div>
+          <div class="axis-label axis-right">计算思维<small>19条</small></div>
+          <div class="axis-label axis-bottom">数字化学习与创新<small>8条</small></div>
+          <div class="axis-label axis-left">信息社会责任<small>8条</small></div>
+          <svg class="radar" viewBox="0 0 520 400" aria-label="核心素养雷达图">
+            <g transform="translate(260,198)">
+              <polygon points="0,-144 144,0 0,144 -144,0" fill="none" stroke="#3d587b" stroke-width="2"/>
+              <polygon points="0,-108 108,0 0,108 -108,0" fill="none" stroke="#3b5677" stroke-width="2"/>
+              <polygon points="0,-72 72,0 0,72 -72,0" fill="none" stroke="#385371" stroke-width="2"/>
+              <polygon points="0,-36 36,0 0,36 -36,0" fill="none" stroke="#36506d" stroke-width="2"/>
+              <line x1="0" y1="-160" x2="0" y2="160" stroke="#34506f" stroke-dasharray="7 8"/>
+              <line x1="-160" y1="0" x2="160" y2="0" stroke="#34506f" stroke-dasharray="7 8"/>
+              <!-- 明细自动核验口径：信息意识7、计算思维19、数字化学习与创新8、信息社会责任8；按最大值19归一化 -->
+              <polygon points="0,-53.05 144,0 0,60.63 -60.63,0" fill="rgba(113,201,225,.34)" stroke="#89cfe4" stroke-width="6" stroke-linejoin="round"/>
+              <circle cx="0" cy="-53.05" r="11" fill="#5dd3cf" stroke="#061327" stroke-width="6"/>
+              <circle cx="144" cy="0" r="11" fill="#f1c85d" stroke="#061327" stroke-width="6"/>
+              <circle cx="0" cy="60.63" r="11" fill="#5d94e0" stroke="#061327" stroke-width="6"/>
+              <circle cx="-60.63" cy="0" r="11" fill="#ef7180" stroke="#061327" stroke-width="6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="core-legend">
+          <button class="legend-btn coreBtn" data-core="信息意识">信息意识 <b>7条</b></button>
+          <button class="legend-btn coreBtn" data-core="计算思维">计算思维 <b>19条</b></button>
+          <button class="legend-btn coreBtn" data-core="数字化学习与创新">数字化学习与创新 <b>8条</b></button>
+          <button class="legend-btn coreBtn" data-core="信息社会责任">信息社会责任 <b>8条</b></button>
+        </div>
+      </div>
+
+      <div class="right">
+        <section class="panel clickable" id="modulePanel">
+          <div class="headline"><h2>课标要求模块分布</h2><span class="hint">按分值统计</span></div>
+          <div class="module-body">
+            <div class="donut-wrap"><div class="donut"></div><div class="donut-center">50/50<small>融合统计</small></div></div>
+            <div class="module-list">
+              <button class="module-btn moduleBtn" data-module="互联网应用与创新"><span class="module-name"><span class="doticon cyan">◎</span>互联网应用与创新</span><b>50分</b></button>
+              <button class="module-btn moduleBtn" data-module="物联网实践与探索"><span class="module-name"><span class="doticon blue">♙</span>物联网实践与探索</span><b>50分</b></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel clickable" id="portraitPanel">
+          <div class="headline"><h2>全卷画像摘要</h2><span class="hint">按明细自动核验</span></div>
+          <div class="portrait-card" id="rateCard"><div class="eyebrow">OUTPUT PORTRAIT</div><div class="portrait-value">条目均值 0.70</div></div>
+        </section>
+
+        <section class="panel clickable" id="difficultyPanel">
+          <div class="headline"><h2>难度梯度结构</h2><span class="hint">按分值统计</span></div>
+          <div class="diff-list">
+            <div class="diff-row diffBtn" data-diff="★★"><span class="stars cyan">★★</span><div class="track"><div class="bar cyanbg" style="width:19.5%"></div></div><span class="score">19.5分</span></div>
+            <div class="diff-row diffBtn" data-diff="★★★"><span class="stars gold">★★★</span><div class="track"><div class="bar goldbg" style="width:45.5%"></div></div><span class="score">45.5分</span></div>
+            <div class="diff-row diffBtn" data-diff="★★★★"><span class="stars red">★★★★</span><div class="track"><div class="bar redbg" style="width:35%"></div></div><span class="score">35分</span></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div class="footer-actions">
+      <button class="action" id="showAll">查看全部题目数据</button>
+      <button class="action" id="aboutData">查看核验口径</button>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modalTitle">数据详情</div><button class="modal-close" id="modalClose">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast">这是本地静态演示页，可直接关闭浏览器标签页。</div>
+
+<script>
+const DATA = [{"题号": "1", "题型": "单选题", "分值": "3", "情境载体": "智慧温室排风扇控制", "考查知识点": "基于数据分析设计算法的方法；and/or复合逻辑推演", "课标内容模块": "物联网实践与探索 / （反馈控制有算法）", "核心素养": "■▲", "认知层次": "应用", "能力要求": "推演", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第20课"}, {"题号": "2", "题型": "单选题", "分值": "3", "情境载体": "文件下载数据包接收", "考查知识点": "可靠传输与不可靠传输的特点及应用场景；TCP重传机制", "课标内容模块": "互联网应用与创新 / （数据传输有新意）", "核心素养": "●■", "认知层次": "理解", "能力要求": "辨析", "难度": "★★★", "预估得分率": "0.70", "教材出处": "七年级 / 第9课"}, {"题号": "3", "题型": "单选题", "分值": "3", "情境载体": "无人机物流指令传输", "考查知识点": "路由器的主要功能；最短路径算法；网络层IP寻址", "课标内容模块": "互联网应用与创新 / （路由路径靠算法）", "核心素养": "■", "认知层次": "应用", "能力要求": "推演", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "七年级 / 第8课"}, {"题号": "4", "题型": "单选题", "分值": "3", "情境载体": "东数西算/龙芯自主", "考查知识点": "网络安全与国家安全的关系；互联网技术自主可控的意义", "课标内容模块": "互联网应用与创新 / （自主可控意义大）", "核心素养": "★", "认知层次": "理解", "能力要求": "辨析", "难度": "★★", "预估得分率": "0.85", "教材出处": "八年第29课 / 七年第29课"}, {"题号": "5", "题型": "单选题", "分值": "3", "情境载体": "智慧校园门禁活体检测", "考查知识点": "Python and逻辑真值测试；摄像头活体检测实践", "课标内容模块": "物联网实践与探索 / （系统安全需升级）", "核心素养": "■★", "认知层次": "分析", "能力要求": "辨析", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第30课"}, {"题号": "6", "题型": "单选题", "分值": "3", "情境载体": "门禁管理员密码加密", "考查知识点": "数据加密传输原理；对称加密逆向解密", "课标内容模块": "物联网实践与探索 / （系统安全需升级）", "核心素养": "■★", "认知层次": "应用", "能力要求": "推演", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "八年级 / 第30课"}, {"题号": "7", "题型": "单选题", "分值": "3", "情境载体": "大模型写历史报告", "考查知识点": "人工智能带来的伦理与安全挑战；AIGC幻觉辨伪", "课标内容模块": "互联网应用与创新 / （网络生态建设好）", "核心素养": "●★", "认知层次": "评价", "能力要求": "论证", "难度": "★★★", "预估得分率": "0.70", "教材出处": "七年级 / 第30课"}, {"题号": "8", "题型": "单选题", "分值": "3", "情境载体": "智能楼梯灯光敏优化", "考查知识点": "传感器的基本原理；常用传感器选型", "课标内容模块": "物联网实践与探索 / （环境数据要感知）", "核心素养": "■▲", "认知层次": "理解", "能力要求": "识别", "难度": "★★", "预估得分率": "0.85", "教材出处": "八年级 / 第2、3课"}, {"题号": "9", "题型": "单选题", "分值": "3", "情境载体": "百草园智慧农场MQTT", "考查知识点": "HTTP通信的基本过程；MQTT发布/订阅机制；API数据提取", "课标内容模块": "物联网实践与探索 / （物物互通有新径）", "核心素养": "■●", "认知层次": "应用", "能力要求": "推演", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第9、10课"}, {"题号": "10", "题型": "单选题", "分值": "3", "情境载体": "外网网站访问路由", "考查知识点": "路由器的主要功能；路由表与下一跳决策", "课标内容模块": "互联网应用与创新 / （路由路径靠算法）", "核心素养": "■", "认知层次": "理解", "能力要求": "解释", "难度": "★★", "预估得分率": "0.85", "教材出处": "七年级 / 第8课"}, {"题号": "11", "题型": "判断题", "分值": "2.5", "情境载体": "物理实验数据可视化", "考查知识点": "数据可视化的作用与局限；常见的数据可视化方式", "课标内容模块": "物联网实践与探索 / （数据呈现可视化）", "核心素养": "●■", "认知层次": "理解", "能力要求": "辨析", "难度": "★★", "预估得分率": "0.85", "教材出处": "八年级 / 第19课"}, {"题号": "12", "题型": "判断题", "分值": "2.5", "情境载体": "DNS欺骗重定向", "考查知识点": "域名和IP地址的关系；域名解析过程；DNS劫持", "课标内容模块": "互联网应用与创新 / （域名解析换编码）", "核心素养": "●★", "认知层次": "理解", "能力要求": "辨析", "难度": "★★", "预估得分率": "0.85", "教材出处": "七年级 / 第7课"}, {"题号": "13", "题型": "判断题", "分值": "2.5", "情境载体": "MQTT气象站通信", "考查知识点": "MQTT通信机制；发布者、订阅者与Broker的关系", "课标内容模块": "物联网实践与探索 / （物物互通有新径）", "核心素养": "■▲", "认知层次": "理解", "能力要求": "辨析", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第10课"}, {"题号": "14", "题型": "判断题", "分值": "2.5", "情境载体": "跨学科网页协同制作", "考查知识点": "Markdown语言特点；多人协同制作网页的优势", "课标内容模块": "互联网应用与创新 / （多人协同效率高）", "核心素养": "▲", "认知层次": "理解", "能力要求": "辨析", "难度": "★★", "预估得分率": "0.85", "教材出处": "七年级 / 第19课"}, {"题号": "15(1)", "题型": "单选题", "分值": "3", "情境载体": "深中通道：推流电脑网络诊断", "考查知识点": "ipconfig命令的功能与输出解读", "课标内容模块": "互联网应用与创新 / （路由路径靠算法）", "核心素养": "■▲", "认知层次": "知道", "能力要求": "识别", "难度": "★★★", "预估得分率": "0.70", "教材出处": "七年级 / 第6课"}, {"题号": "15(2)", "题型": "填空题", "分值": "3", "情境载体": "深中通道：台风中路由器绕行", "考查知识点": "路由绕行路径规划；网络拓扑故障分析", "课标内容模块": "互联网应用与创新 / （路由路径靠算法）", "核心素养": "■", "认知层次": "应用", "能力要求": "推演", "难度": "★★★", "预估得分率": "0.70", "教材出处": "七年级 / 第8课"}, {"题号": "15(3)", "题型": "多选题", "分值": "4", "情境载体": "深中通道：路由自动绕行原理", "考查知识点": "路由器故障检测；路由表动态更新；备用路径转发", "课标内容模块": "互联网应用与创新 / （路由路径靠算法）", "核心素养": "■", "认知层次": "分析", "能力要求": "论证", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "七年级 / 第8课"}, {"题号": "15(4)", "题型": "单选题", "分值": "3", "情境载体": "深中通道：桥面视频流传输", "考查知识点": "UDP协议特点与适用场景；实时视频传输", "课标内容模块": "互联网应用与创新 / （数据传输有新意）", "核心素养": "■●", "认知层次": "理解", "能力要求": "辨析", "难度": "★★★", "预估得分率": "0.70", "教材出处": "七年级 / 第9课"}, {"题号": "15(5)", "题型": "简答题", "分值": "7", "情境载体": "深中通道：车流量报表上报", "考查知识点": "TCP可靠传输的底层机制（三次握手/确认应答/超时重传/序列号）", "课标内容模块": "互联网应用与创新 / （数据传输有新意）", "核心素养": "■", "认知层次": "分析", "能力要求": "论证", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "七年级 / 第9课"}, {"题号": "15(6)", "题型": "单选题", "分值": "3", "情境载体": "深中通道：域名无法解析", "考查知识点": "DNS服务器故障诊断；域名与IP地址的映射关系", "课标内容模块": "互联网应用与创新 / （域名解析换编码）", "核心素养": "●★", "认知层次": "应用", "能力要求": "辨析", "难度": "★★★", "预估得分率": "0.70", "教材出处": "七年级 / 第7课"}, {"题号": "15(7)", "题型": "单选题", "分值": "3", "情境载体": "深中通道：网页样式统改", "考查知识点": "CSS内容与样式分离；网页外观控制技术", "课标内容模块": "互联网应用与创新 / （多人协同效率高）", "核心素养": "▲", "认知层次": "知道", "能力要求": "识别", "难度": "★★", "预估得分率": "0.85", "教材出处": "七年级 / 第19课"}, {"题号": "15(8)", "题型": "简答+选择", "分值": "4", "情境载体": "深中通道：HTML网页排错", "考查知识点": "img标签src属性；a标签href属性；HTML代码调试", "课标内容模块": "互联网应用与创新 / （多人协同效率高）", "核心素养": "▲■", "认知层次": "应用", "能力要求": "辨析", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "七年级 / 第19课"}, {"题号": "16(1)", "题型": "填空题", "分值": "8", "情境载体": "大沙河：物联网流程图模块匹配", "考查知识点": "物联网系统流程：采集→传输→分析→反馈；模块功能匹配", "课标内容模块": "物联网实践与探索 / （环境数据要感知）", "核心素养": "■", "认知层次": "分析", "能力要求": "设计", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "八年级 / 第3课"}, {"题号": "16(2)", "题型": "填表题", "分值": "6", "情境载体": "大沙河：传感器数据推演判断", "考查知识点": "基于阈值条件的数据推演（PH范围/红外距离/逻辑判断）", "课标内容模块": "物联网实践与探索 / （反馈控制有算法）", "核心素养": "■", "认知层次": "应用", "能力要求": "推演", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第20课"}, {"题号": "16(3)", "题型": "填空题", "分值": "6", "情境载体": "大沙河：MQTT通信代码补全", "考查知识点": "MQTT协议publish/subscribe方法；Python物联网编程", "课标内容模块": "物联网实践与探索 / （物物互通有新径）", "核心素养": "■▲", "认知层次": "应用", "能力要求": "设计", "难度": "★★★★", "预估得分率": "0.55", "教材出处": "八年级 / 第10课"}, {"题号": "16(4)", "题型": "单选题", "分值": "4", "情境载体": "大沙河：DDoS拒绝服务攻击", "考查知识点": "网络安全威胁防范；DDoS攻击原理与防火墙策略", "课标内容模块": "物联网实践与探索 / （自主可控意义大）", "核心素养": "★", "认知层次": "理解", "能力要求": "辨析", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第29课"}, {"题号": "16(5)", "题型": "简答题", "分值": "6", "情境载体": "大沙河：自主可控与生态数据安全", "考查知识点": "信息社会责任；核心技术自主可控对国家安全的意义", "课标内容模块": "物联网实践与探索 / （自主可控意义大）", "核心素养": "★", "认知层次": "评价", "能力要求": "论证", "难度": "★★★", "预估得分率": "0.70", "教材出处": "八年级 / 第29课"}];
+const SUMMARY = {"core":[{"name":"信息意识","symbol":"●","entries":7,"tone":"cyan"},{"name":"计算思维","symbol":"■","entries":19,"tone":"gold"},{"name":"数字化学习与创新","symbol":"▲","entries":8,"tone":"blue"},{"name":"信息社会责任","symbol":"★","entries":8,"tone":"red"}],"modules":[{"name":"互联网应用与创新","score":50,"tone":"cyan"},{"name":"物联网实践与探索","score":50,"tone":"blue"}],"difficulty":[{"stars":"★★","label":"低难度","score":19.5,"entries":7,"tone":"cyan"},{"stars":"★★★","label":"中等难度","score":45.5,"entries":13,"tone":"gold"},{"stars":"★★★★","label":"较高难度","score":35,"entries":7,"tone":"red"}],"rateMean":0.7,"rateWeighted":0.67675};
+const symbols = {'●':'信息意识','■':'计算思维','▲':'数字化学习与创新','★':'信息社会责任'};
+const reverseSymbols = Object.fromEntries(Object.entries(symbols).map(([k,v])=>[v,k]));
+const modal = document.getElementById('modalBackdrop');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+function esc(v){return String(v ?? '').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
+function openModal(title, body){modalTitle.textContent=title;modalBody.innerHTML=body;modal.classList.add('show');document.body.style.overflow='hidden'}
+function closeModal(){modal.classList.remove('show');document.body.style.overflow=''}
+document.getElementById('modalClose').onclick=closeModal;modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+function detailGrid(row){
+  const items = [
+    ['题号',row.题号],['题型',row.题型],['分值',row.分值+' 分'],['难度',row.难度],
+    ['情境载体',row.情境载体,'wide'],['考查知识点',row.考查知识点,'wide'],['课标内容模块',row.课标内容模块,'wide'],
+    ['核心素养',row.核心素养],['认知层次',row.认知层次],['能力要求',row.能力要求],['预估得分率',row.预估得分率],
+    ['教材出处',row.教材出处,'wide']
+  ];
+  return '<div class="detail-grid">'+items.map(x=>`<div class="detail ${x[2]||''}"><div class="detail-label">${esc(x[0])}</div><div class="detail-value">${esc(x[1])}</div></div>`).join('')+'</div>';
+}
+function table(rows){
+  const hs=['题号','题型','分值','情境载体','考查知识点','课标内容模块','核心素养','认知层次','能力要求','难度','预估得分率','教材出处'];
+  return `<div class="table-wrap"><table class="data-table"><thead><tr>${hs.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${hs.map(h=>`<td>${esc(r[h])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function rowsForCore(name){const sym=reverseSymbols[name]; return DATA.filter(r=>r.核心素养.includes(sym))}
+function rowsForModule(name){return DATA.filter(r=>r.课标内容模块.includes(name))}
+function rowsForDiff(stars){return DATA.filter(r=>r.难度===stars)}
+
+document.getElementById('questionSummary').onclick=()=>openModal('第1题 · 完整细目数据', detailGrid(DATA[0]));
+document.getElementById('corePanel').addEventListener('click',e=>{if(e.target.closest('.coreBtn')) return; openModal('核心素养 · 27条明细核验', `<div class="detail-grid">${SUMMARY.core.map(x=>`<div class="detail"><div class="detail-label">${esc(x.symbol+' '+x.name)}</div><div class="detail-value">${x.entries} 条细目出现</div></div>`).join('')}</div>`)});
+document.querySelectorAll('.coreBtn').forEach(btn=>btn.onclick=e=>{e.stopPropagation();const n=btn.dataset.core;const s=SUMMARY.core.find(x=>x.name===n);const rs=rowsForCore(n);openModal(`${n} · ${s.entries}条明细`, table(rs))});
+document.getElementById('modulePanel').addEventListener('click',e=>{if(e.target.closest('.moduleBtn')) return;openModal('课标要求模块分布 · 明细分值求和', `<div class="detail-grid">${SUMMARY.modules.map(x=>`<div class="detail"><div class="detail-label">${esc(x.name)}</div><div class="detail-value">${x.score} 分 · ${x.score}%</div></div>`).join('')}</div>`)});
+document.querySelectorAll('.moduleBtn').forEach(btn=>btn.onclick=e=>{e.stopPropagation();const n=btn.dataset.module;const s=SUMMARY.modules.find(x=>x.name===n);openModal(`${n} · ${s.score}分`, table(rowsForModule(n))) });
+document.getElementById('portraitPanel').onclick=()=>openModal('全卷画像摘要 · 可复核指标', `<div class="detail-grid"><div class="detail"><div class="detail-label">全卷满分</div><div class="detail-value">100 分</div></div><div class="detail"><div class="detail-label">考试时间</div><div class="detail-value">60 分钟</div></div><div class="detail"><div class="detail-label">细目条目数</div><div class="detail-value">${DATA.length} 条</div></div><div class="detail"><div class="detail-label">条目预估得分率算术均值</div><div class="detail-value">${SUMMARY.rateMean.toFixed(2)}</div></div><div class="detail"><div class="detail-label">按分值加权预估得分率</div><div class="detail-value">${SUMMARY.rateWeighted.toFixed(2)}</div></div><div class="detail wide"><div class="detail-label">命题依据</div><div class="detail-value">《义务教育信息科技课程标准（2022年版）》第四学段（七—八年级）</div></div></div>`);
+document.getElementById('difficultyPanel').addEventListener('click',e=>{if(e.target.closest('.diffBtn')) return;openModal('难度梯度结构 · 明细分值求和', `<div class="detail-grid">${SUMMARY.difficulty.map(x=>`<div class="detail"><div class="detail-label">${x.stars} ${x.label}</div><div class="detail-value">${x.entries}条 · ${x.score}分</div></div>`).join('')}</div>`)});
+document.querySelectorAll('.diffBtn').forEach(btn=>btn.onclick=e=>{e.stopPropagation();const d=btn.dataset.diff;const s=SUMMARY.difficulty.find(x=>x.stars===d);openModal(`${d} ${s.label} · ${s.entries}条 / ${s.score}分`, table(rowsForDiff(d))) });
+document.getElementById('showAll').onclick=()=>openModal(`全部题目数据 · ${DATA.length}条细目`, table(DATA));
+document.getElementById('aboutData').onclick=()=>openModal('数据核验口径', `<div class="detail-grid">
+<div class="detail wide"><div class="detail-label">唯一统计底表</div><div class="detail-value">本页面的聚合图表全部由《深圳市2026年信息科技学科命题比赛试卷·多维细目表（初中阶段）》27条题目/子题明细自动汇总，不使用模型补充数据。</div></div>
+<div class="detail wide"><div class="detail-label">双模块融合口径</div><div class="detail-value">按展示要求，将原表第三模块并入“互联网应用与创新”和“物联网实践与探索”，主界面仅保留两个模块。</div></div>
+<div class="detail wide"><div class="detail-label">明细求和结果</div><div class="detail-value">融合后模块分值：互联网应用与创新50分、物联网实践与探索50分，合计100分；难度分值仍为★★ 19.5分、★★★ 45.5分、★★★★ 35分；核心素养按27条明细的符号出现次数仍为：●7、■19、▲8、★8。</div></div>
+<div class="detail wide"><div class="detail-label">12分归并明细</div><div class="detail-value">原第三模块12分按题目情境归并：第4题3分、第7题3分并入“互联网应用与创新”；第16(5)题6分并入“物联网实践与探索”。因此由原明细44/44/12形成双模块50/50。该归并仅改变模块统计口径，不修改题型、分值、知识点、核心素养、认知层次、能力要求、难度、预估得分率和教材出处。</div></div>
+<div class="detail wide"><div class="detail-label">预估得分率</div><div class="detail-value">27条明细的预估得分率算术均值为0.70；若按各题分值加权，则为0.67675，界面显示为0.68。两者计算口径均在此明确标注。</div></div>
+</div>`);
+const toast=document.getElementById('toast');document.getElementById('closePage').onclick=()=>{toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2300)};
+</script>
+<script>
+document.getElementById('closePage').onclick=()=>parent.postMessage({type:'ipo-dashboard-close'},'*');
+</script>
+</body>
+</html>
