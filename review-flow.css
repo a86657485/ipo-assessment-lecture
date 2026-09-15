@@ -77,3 +77,10 @@ body[data-page="6"] .deck-page:not([data-page-index="6"]) { transform: translate
 .review-stage[data-step="5"] .review-detail-box.detail-5 { animation-delay: 1.31s; }
 .review-stage.is-stable .review-final-flow > .review-final-node,.review-stage.is-stable .review-final-flow > .review-final-arrow,.review-stage.is-stable .review-detail-box { animation: none; opacity: 1; transform: none; }
 @keyframes review-final-in { from { opacity: 0; transform: translateY(1.4cqw) scale(.96); } to { opacity: 1; transform: none; } }
+/* Let each headline use the widest readable size for its own line length. */
+.review-final-node:nth-of-type(1) h3 { font-size: 2.6cqw; line-height: 1.08; }
+.review-final-node:nth-of-type(2) h3 { font-size: 1.9cqw; line-height: 1.12; }
+.review-final-node:nth-of-type(3) h3 { font-size: 3.4cqw; line-height: 1.02; letter-spacing: -.08em; }
+.review-final-node:nth-of-type(4) h3 { font-size: 1.9cqw; line-height: 1.12; }
+.review-final-node:nth-of-type(5) h3 { font-size: 1.8cqw; line-height: 1.08; }
+.review-detail-box { padding: .62cqw .82cqw; font-size: 1cqw; line-height: 1.4; display: flex; align-items: center; }
