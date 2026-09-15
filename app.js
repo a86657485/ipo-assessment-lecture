@@ -1,6 +1,7 @@
 const pages = [...document.querySelectorAll('.deck-page')];
 const analysisScroll = document.querySelector('.analysis-scroll');
 const blankScene = document.querySelector('.blank-scene');
+const questionShowcaseFrame = document.querySelector('#question-showcase-frame');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 let pageIndex = 0;
 let blankStep = 0;
@@ -133,6 +134,11 @@ document.querySelector('#scene-back').addEventListener('click', () => setBlankSt
 document.querySelector('#scene-next').addEventListener('click', () => setBlankStep(blankStep + 1));
 document.querySelector('#replay').addEventListener('click', () => pageIndex === 0 ? replayCover() : pageIndex === 2 ? setBlankStep(0, true) : pageIndex === 3 ? window.resetCollaboration() : pageIndex === 4 ? window.replayIPO() : analysisScroll.scrollTo({top:0,behavior:'smooth'}));
 document.querySelector('#fullscreen').addEventListener('click', fullscreen);
+window.addEventListener('message', event => {
+  if (event.source === questionShowcaseFrame?.contentWindow && event.data?.type === 'question-showcase-page') {
+    setPage(pageIndex + event.data.direction);
+  }
+});
 document.addEventListener('pointermove', showControls);
 window.addEventListener('resize', () => { if (pageIndex === 1) goGallery(galleryIndex); });
 document.addEventListener('keydown', event => {
