@@ -36,6 +36,8 @@ function setPage(next) {
   else window.stopIPO?.();
   if (pageIndex === 6) window.startReviewFlow?.();
   if (pageIndex === 7) window.resetCityStage?.();
+  if (pageIndex === 8) window.startThanks?.();
+  else window.stopThanks?.();
 }
 
 function setBlankStep(next, reset = false) {
@@ -134,7 +136,7 @@ document.querySelector('#page-up').addEventListener('click', () => setPage(pageI
 document.querySelector('#page-down').addEventListener('click', () => setPage(pageIndex + 1));
 document.querySelector('#scene-back').addEventListener('click', () => setBlankStep(blankStep - 1));
 document.querySelector('#scene-next').addEventListener('click', () => setBlankStep(blankStep + 1));
-document.querySelector('#replay').addEventListener('click', () => pageIndex === 0 ? replayCover() : pageIndex === 2 ? setBlankStep(0, true) : pageIndex === 3 ? window.resetCollaboration() : pageIndex === 4 ? window.replayIPO() : pageIndex === 6 ? window.resetReviewFlow() : pageIndex === 7 ? window.resetCityStage() : analysisScroll.scrollTo({top:0,behavior:'smooth'}));
+document.querySelector('#replay').addEventListener('click', () => pageIndex === 0 ? replayCover() : pageIndex === 2 ? setBlankStep(0, true) : pageIndex === 3 ? window.resetCollaboration() : pageIndex === 4 ? window.replayIPO() : pageIndex === 6 ? window.resetReviewFlow() : pageIndex === 7 ? window.resetCityStage() : pageIndex === 8 ? window.resetThanks() : analysisScroll.scrollTo({top:0,behavior:'smooth'}));
 document.querySelector('#fullscreen').addEventListener('click', fullscreen);
 window.addEventListener('message', event => {
   if (event.source === questionShowcaseFrame?.contentWindow && event.data?.type === 'question-showcase-page') {
@@ -157,7 +159,7 @@ document.addEventListener('keydown', event => {
   if (pageIndex === 2 && event.key === 'ArrowUp') { event.preventDefault(); setBlankStep(blankStep - 1); }
 });
 document.addEventListener('wheel', event => {
-  if (document.querySelector('dialog[open]') || event.ctrlKey || pageIndex === 1 || pageIndex === 3 || pageIndex === 4 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+  if (document.querySelector('dialog[open]') || event.ctrlKey || pageIndex === 1 || pageIndex === 3 || pageIndex === 4 || pageIndex === 8 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
   event.preventDefault();
   const now = performance.now(); if (now - wheelLast > 260) wheelAmount = 0; wheelLast = now;
   if (!Number.isFinite(wheelAmount)) return;

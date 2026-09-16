@@ -1,0 +1,6 @@
+{
+  "name": "lecture-thanks-gallery-tools",
+  "private": true,
+  "scripts": { "build": "node build.cjs" },
+  "devDependencies": { "three": "0.183.0", "esbuild": "0.25.12" }
+}
