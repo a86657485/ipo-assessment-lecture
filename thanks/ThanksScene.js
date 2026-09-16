@@ -13,6 +13,7 @@ class ThanksScene {
       if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();this.advance(e.key==='ArrowDown'?1:-1);}};
     this.onWheel=e=>{if(e.ctrlKey||Math.abs(e.deltaY)<=Math.abs(e.deltaX)||document.body.dataset.page!=='8')return;e.preventDefault();
       if(!this.ready)return;if(performance.now()-this.started<2600){this.started=performance.now()-2700;this.wake();return;}
+      if(this.scroll.target===0&&this.scroll.current<-.025){this.scroll.current=0;this.scroll.previous=0;this.scroll.velocity=0;this.wake();return;}
       if(this.scroll.wheel(e,performance.now())){this.endingAt=null;this.wake();}};
     this.onVisibility=()=>{if(document.hidden){cancelAnimationFrame(this.raf);this.raf=null;this.running=false;}else this.wake();};
     this.onLost=e=>{e.preventDefault();if(!this.disposed){this.releaseGPU();this.useFallback();this.wake();}};
@@ -62,6 +63,7 @@ class ThanksScene {
   resize(){if(!this.renderer)return;const r=this.page.getBoundingClientRect();if(!r.width||!r.height)return;
     this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.updateProjectionMatrix();this.gallery?.resize(this.camera.aspect);}
   advance(direction){if(!this.ready)return;if(performance.now()-this.started<2600){this.started=performance.now()-2700;this.wake();return;}
+    if(this.scroll.target===0&&this.scroll.current<-.025){this.scroll.current=0;this.scroll.previous=0;this.scroll.velocity=0;this.wake();return;}
     if(this.scroll.move(direction,performance.now())){this.endingAt=null;this.wake();}}
   wake(){if(this.disposed||document.hidden||this.running)return;this.running=true;this.previousTime=performance.now();this.frame(this.previousTime);}
   frame(now){
