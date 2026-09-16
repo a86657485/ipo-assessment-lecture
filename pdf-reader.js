@@ -1,7 +1,7 @@
 const dialog = document.createElement('dialog');
 dialog.id = 'pdf-viewer';
 dialog.setAttribute('aria-labelledby', 'pdf-document-title');
-dialog.innerHTML = `<header class="pdf-toolbar"><h2 id="pdf-document-title"></h2><div class="pdf-actions"><button data-action="previous" aria-label="上一页">←</button><input id="pdf-page-input" type="number" min="1" value="1" aria-label="页码"><span class="pdf-total"></span><button data-action="next" aria-label="下一页">→</button><button data-action="out" aria-label="缩小">−</button><span class="pdf-scale">100%</span><button data-action="in" aria-label="放大">＋</button><button data-action="close" aria-label="关闭文件">×</button></div></header><div class="pdf-scroll" tabindex="0" aria-label="PDF正文"><p class="pdf-message" role="status">正在打开…</p><div class="pdf-pages"></div><button class="pdf-retry" hidden>重新打开</button></div>`;
+dialog.innerHTML = `<header class="pdf-toolbar"><h2 id="pdf-document-title"></h2><div class="pdf-actions"><button data-action="previous" aria-label="上一页">←</button><input id="pdf-page-input" type="number" min="1" value="1" aria-label="页码"><span class="pdf-total"></span><button data-action="next" aria-label="下一页">→</button><button data-action="out" aria-label="缩小">−</button><span class="pdf-scale">100%</span><button data-action="in" aria-label="放大">＋</button><button data-action="marker" aria-label="开启黄色标注笔" aria-pressed="false">标注笔</button><button data-action="close" aria-label="关闭文件">×</button></div></header><div class="pdf-scroll" tabindex="0" aria-label="PDF正文"><p class="pdf-message" role="status">正在打开…</p><div class="pdf-pages"></div><button class="pdf-retry" hidden>重新打开</button></div>`;
 document.body.append(dialog);
 const scroller = dialog.querySelector('.pdf-scroll');
 const pagesRoot = dialog.querySelector('.pdf-pages');
@@ -24,6 +24,99 @@ let resizeTimer;
 const visible = new Set();
 const queue = new Set();
 let shells = [];
+const annotations = new Map();
+let markerEnabled = false;
+let activeStroke;
+
+function setMarker(enabled) {
+  markerEnabled = Boolean(enabled) && Boolean(documentPdf);
+  const button = dialog.querySelector('[data-action="marker"]');
+  button.setAttribute('aria-pressed', String(markerEnabled));
+  button.textContent = markerEnabled ? '标注中' : '标注笔';
+  button.setAttribute('aria-label', markerEnabled ? '退出黄色标注笔' : '开启黄色标注笔');
+  dialog.classList.toggle('is-marking', markerEnabled);
+  dialog.querySelectorAll('.pdf-ink').forEach(ink => ink.classList.toggle('is-drawing', markerEnabled));
+}
+
+function pointFromEvent(event, ink) {
+  const rect = ink.getBoundingClientRect();
+  return {
+    x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+    y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
+  };
+}
+
+function drawAnnotations(ink) {
+  const page = Number(ink.closest('.pdf-page').dataset.page);
+  const strokes = annotations.get(page) || [];
+  const cssWidth = Number(ink.dataset.width);
+  const cssHeight = Number(ink.dataset.height);
+  const ratio = Number(ink.dataset.ratio);
+  const context = ink.getContext('2d');
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  context.clearRect(0, 0, cssWidth, cssHeight);
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.lineWidth = Math.max(14, Math.min(26, cssWidth * .016));
+  context.strokeStyle = '#ffe55c';
+  context.fillStyle = '#ffe55c';
+  context.globalAlpha = .52;
+  for (const stroke of strokes) {
+    if (!stroke.length) continue;
+    if (stroke.length === 1) {
+      context.beginPath();
+      context.arc(stroke[0].x * cssWidth, stroke[0].y * cssHeight, context.lineWidth / 2, 0, Math.PI * 2);
+      context.fill();
+      continue;
+    }
+    context.beginPath();
+    context.moveTo(stroke[0].x * cssWidth, stroke[0].y * cssHeight);
+    for (let index = 1; index < stroke.length; index++) context.lineTo(stroke[index].x * cssWidth, stroke[index].y * cssHeight);
+    context.stroke();
+  }
+  context.globalAlpha = 1;
+}
+
+function createInk(shell, viewport) {
+  const previous = shell.querySelector('.pdf-ink');
+  if (previous) previous.remove();
+  const ink = document.createElement('canvas');
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  ink.className = 'pdf-ink';
+  ink.width = Math.ceil(viewport.width * ratio);
+  ink.height = Math.ceil(viewport.height * ratio);
+  ink.style.width = `${viewport.width}px`;
+  ink.style.height = `${viewport.height}px`;
+  ink.dataset.width = viewport.width;
+  ink.dataset.height = viewport.height;
+  ink.dataset.ratio = ratio;
+  ink.classList.toggle('is-drawing', markerEnabled);
+  ink.addEventListener('pointerdown', event => {
+    if (!markerEnabled || event.button !== 0) return;
+    event.preventDefault();
+    const page = Number(shell.dataset.page);
+    const stroke = [pointFromEvent(event, ink)];
+    if (!annotations.has(page)) annotations.set(page, []);
+    annotations.get(page).push(stroke);
+    activeStroke = {ink, stroke, pointerId: event.pointerId};
+    ink.setPointerCapture(event.pointerId);
+    drawAnnotations(ink);
+  });
+  ink.addEventListener('pointermove', event => {
+    if (!activeStroke || activeStroke.ink !== ink || activeStroke.pointerId !== event.pointerId) return;
+    activeStroke.stroke.push(pointFromEvent(event, ink));
+    drawAnnotations(ink);
+  });
+  const finish = event => {
+    if (!activeStroke || activeStroke.ink !== ink || activeStroke.pointerId !== event.pointerId) return;
+    if (ink.hasPointerCapture(event.pointerId)) ink.releasePointerCapture(event.pointerId);
+    activeStroke = undefined;
+    drawAnnotations(ink);
+  };
+  ink.addEventListener('pointerup', finish);
+  ink.addEventListener('pointercancel', finish);
+  return ink;
+}
 
 function controls() {
   input.value = currentPage;
@@ -53,7 +146,7 @@ async function drain() {
       const number = [...queue].sort((a, b) => Math.abs(a - currentPage) - Math.abs(b - currentPage))[0];
       queue.delete(number);
       const shell = shells[number - 1];
-      if (!shell || shell.querySelector('canvas') || !visible.has(number)) continue;
+      if (!shell || shell.querySelector('.pdf-render') || !visible.has(number)) continue;
       const page = await pdf.getPage(number);
       if (version !== generation) break;
       const width = baseWidth * magnification;
@@ -61,6 +154,7 @@ async function drain() {
       const viewport = page.getViewport({ scale: width / original.width });
       shell.style.height = `${viewport.height}px`;
       const canvas = document.createElement('canvas');
+      canvas.className = 'pdf-render';
       const pixelRatio = Math.min(devicePixelRatio || 1, 1.5, 3600 / viewport.width);
       canvas.width = Math.ceil(viewport.width * pixelRatio);
       canvas.height = Math.ceil(viewport.height * pixelRatio);
@@ -72,7 +166,12 @@ async function drain() {
       await renderTask.promise;
       renderTask = undefined;
       if (version !== generation) break;
-      if (visible.has(number)) shell.append(canvas);
+      if (visible.has(number)) {
+        shell.append(canvas);
+        const ink = createInk(shell, viewport);
+        shell.append(ink);
+        drawAnnotations(ink);
+      }
       else { canvas.width = 0; canvas.height = 0; }
       page.cleanup();
     }
@@ -105,8 +204,9 @@ function layout() {
       if (entry.isIntersecting) { visible.add(number); queue.add(number); }
       else {
         visible.delete(number); queue.delete(number);
-        const canvas = entry.target.querySelector('canvas');
+        const canvas = entry.target.querySelector('.pdf-render');
         if (canvas) { canvas.width = 0; canvas.height = 0; canvas.remove(); }
+        entry.target.querySelector('.pdf-ink')?.remove();
       }
     }
     void drain();
@@ -127,8 +227,11 @@ async function dispose() {
   observer?.disconnect(); renderTask?.cancel();
   queue.clear(); visible.clear();
   documentPdf = undefined;
-  shells.forEach(shell => { const c = shell.querySelector('canvas'); if (c) { c.width = 0; c.height = 0; } });
+  shells.forEach(shell => { const c = shell.querySelector('.pdf-render'); if (c) { c.width = 0; c.height = 0; } });
   shells = []; pagesRoot.replaceChildren();
+  annotations.clear();
+  activeStroke = undefined;
+  setMarker(false);
   const task = loadTask; loadTask = undefined;
   if (task) await task.destroy();
 }
@@ -137,6 +240,8 @@ async function openPdf(url, title) {
   const version = generation;
   sourceUrl = url; sourceTitle = title;
   currentPage = 1; magnification = 1;
+  annotations.clear();
+  setMarker(false);
   dialog.querySelector('h2').textContent = title;
   message.textContent = '正在打开…'; message.hidden = false; retry.hidden = true;
   if (!dialog.open) dialog.showModal();
@@ -166,6 +271,7 @@ document.querySelectorAll('a[data-document]').forEach(link => link.addEventListe
 dialog.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
   const action = button.dataset.action;
   if (action === 'close') dialog.close();
+  if (action === 'marker') setMarker(!markerEnabled);
   if (action === 'previous') jump(currentPage - 1);
   if (action === 'next') jump(currentPage + 1);
   if ((action === 'in' || action === 'out') && documentPdf) {
